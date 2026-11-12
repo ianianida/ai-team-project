@@ -19,7 +19,7 @@ def main():
     headers = {}
     if key := os.getenv("MODEL_SERVER_API_KEY"):
         headers["X-API-Key"] = key
-    expected = json.loads((ROOT.parent / "supabase" / "item-labels.json").read_text())
+    expected = json.loads((ROOT.parent / "supabase" / "item-labels.json").read_text(encoding="utf-8"))
     with httpx.Client(base_url=args.base_url, headers=headers, timeout=10) as client:
         health = client.get("/health")
         health.raise_for_status()
