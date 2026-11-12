@@ -27,7 +27,7 @@ curl 'http://127.0.0.1:8001/model/classes?q=calculator'
 
 Supabase는 사용자가 나중에 제공할 예정이므로 연결 정보나 실제 DB 행을 코드에 넣지 않았습니다.
 
-1. 새 프로젝트를 만든 뒤 supabase/setup-labels.sql을 SQL Editor에서 실행합니다. 파일에는 제안 테이블과 계산기·가위·마우스 초기 항목이 있으며 실제 대여 품목에 맞게 검토합니다.
+1. 새 프로젝트를 만든 뒤 [Supabase 마이그레이션 안내](../supabase/README.md)에 따라 테이블과 초기 라벨을 등록합니다. 계산기·가위·스테이플러·자·우산·마우스 여섯 항목을 준비했습니다.
 2. model-server/.env에 SUPABASE_URL과 SUPABASE_KEY를 입력합니다. 기본 SQL은 비공개 서버 조회용이므로 서버 전용 secret key 또는 기존 service_role key를 사용합니다. 이 키를 React 코드나 VITE_ 환경변수에 넣지 않습니다.
 3. 모델 서버를 다시 실행한 뒤 /labels를 호출해 실제 행과 모델 지원 여부를 확인합니다.
 
@@ -38,7 +38,7 @@ Supabase는 사용자가 나중에 제공할 예정이므로 연결 정보나 �
 | model_label | YOLO의 출력 라벨 | Calculator |
 | is_active | 현재 사용 중인 라벨 | true |
 
-모델 라벨은 Calculator, Scissors, Computer mouse가 포함되어 있습니다. 모델 클래스 ID를 DB ID로 사용하지 않습니다. 예를 들어 class_id=80은 모델 내부 계산기 번호이며, catalog_label.id가 실제 DB의 물품 종류 ID입니다.
+기준 모델 라벨은 Calculator, Scissors, Stapler, Ruler, Umbrella, Computer mouse입니다. 모델 클래스 ID를 DB ID로 사용하지 않습니다. 예를 들어 class_id=80은 모델 내부 계산기 번호이며, catalog_label.id가 실제 DB의 물품 종류 ID입니다.
 
 이미 테이블이 있다면 SQL을 실행하지 않고 .env의 SUPABASE_LABEL_TABLE 및 각 COLUMN 설정을 실제 구조에 맞춥니다. 활성 여부 컬럼이 없으면 SUPABASE_LABEL_ACTIVE_COLUMN 값을 비워 둡니다. model_label 컬럼에 같은 이름이 두 번 연결되어 있으면 ambiguous로 반환하고 한 행을 임의로 고르지 않습니다.
 
