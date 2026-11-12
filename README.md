@@ -1,6 +1,10 @@
 # AI 개발과 실전 팀 프로젝트
 
-React와 Vite로 만든 팀 프로젝트의 초기 코드입니다. 현재는 기본 화면만 있으며 백엔드와 AI 기능은 아직 구현되지 않았습니다.
+React와 Vite로 만든 팀 프로젝트입니다. 현재 프론트엔드는 초기 화면이며, 별도의 Python 모델 서버가 사진 인식과 Supabase 물품 라벨 연결을 제공합니다. Supabase 연결 정보는 추후 설정합니다.
+
+## 물품 인식 모델 서버
+
+YOLOv8 Open Images V7 사전학습 모델을 사용합니다. 실행 방법, 환경변수, API 사용법은 [모델 서버 안내](model-server/README.md)를 참고하세요. 새 Supabase 프로젝트용 테이블과 초기 라벨 SQL은 [라벨 초기화 SQL](supabase/setup-labels.sql)에 있습니다. 이 SQL은 아직 원격 DB에 적용하지 않았습니다.
 
 ## 로컬에서 실행하기
 
