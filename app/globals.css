@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+/* 디자인 토큰 — 색을 바꾸려면 여기만 고치면 된다. */
+@theme {
+  --color-paper: #e9ede9; /* 바탕 */
+  --color-surface: #ffffff; /* 목록·입력 칸 */
+  --color-ink: #14201c; /* 글자 */
+  --color-muted: #46534e; /* 보조 글자 */
+  --color-brand: #1b6551; /* 버튼·현재 메뉴 */
+  --color-brand-dark: #144c3d;
+  --color-warn: #a3440c; /* 수량 0개·미반납 */
+  --color-line: #b9c3bc; /* 구분선 */
+  --color-field: #74817a; /* 입력 칸 테두리 */
+
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+}
+
+/* 밝은 화면으로 고정한다 (시스템 다크 모드를 따라가지 않음). */
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
