@@ -11,7 +11,7 @@
 | Install Command | `npm ci` |
 | Build Command | `npm run build` |
 | Output Directory | Next.js 기본값, 수동 지정하지 않음 |
-| Environment Variables | 현재 코드에서 필요한 값 없음 |
+| Environment Variables | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (연결 확인 API용) |
 
 `vercel.json`에는 프레임워크, 설치 명령, 빌드 명령이 지정되어 있다. `.vercelignore`는 로컬 빌드 결과, 설치된 패키지, Git 기록과 환경 파일을 배포 업로드에서 제외한다.
 
@@ -47,6 +47,7 @@ Vercel에는 소스 폴더를 전달한다. 로컬의 `.next`만 올리거나 `v
 - `/items`에서 임시 물품 목록을 확인하고 등록·수정할 수 있다.
 - 물품은 브라우저 메모리에만 저장된다. 새로고침하면 초기 목록으로 돌아간다. Vercel 배포 후에도 같은 방식으로 동작한다.
 - `/returns`는 아직 반납 데이터나 AI 모델과 연결되지 않은 화면이다.
+- `/api/health`는 Supabase 데이터베이스 연결만 확인한다. 위 환경 변수와 데이터베이스 함수가 없으면 503을 반환한다.
 - Pretendard 글꼴은 jsDelivr에서 불러온다. 불러오지 못하면 시스템 글꼴을 사용한다.
 
 ## 참고한 공식 문서
