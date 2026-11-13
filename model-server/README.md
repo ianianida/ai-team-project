@@ -82,7 +82,7 @@ if (!response.ok) throw new Error('물품 인식 요청 실패')
 const result = await response.json()
 ~~~
 
-외부 배포 시에는 React → Node.js API → 모델 서버로 연결하고 MODEL_SERVER_API_KEY를 설정하여 Node.js에서 X-API-Key 헤더로 전달합니다. 서버 비밀 키를 브라우저에 넣지 않습니다. 현재 실행 주소는 로컬 주소이므로 Vercel의 서버에서 이 Mac의 localhost를 호출할 수 없습니다. 공개 모델 서버 배포 및 프론트 연결은 별도 작업입니다.
+외부 테스트는 React → `/api/model/predict` → HTTPS 터널 → 모델 서버로 연결합니다. Node.js Route Handler가 서버 환경 변수의 공유 키를 `X-API-Key`로 전달하며 브라우저에는 노출하지 않습니다. ngrok 무료 고정 주소와 실행·Vercel 설정은 [HTTPS_SETUP.md](../HTTPS_SETUP.md)를 참고하세요. 반납 화면에서 사진을 선택하고 결과를 표시하는 UI 연결은 별도 작업입니다.
 
 ## 검증 및 범위
 

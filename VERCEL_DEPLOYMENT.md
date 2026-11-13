@@ -48,6 +48,7 @@ Vercel에는 소스 폴더를 전달한다. 로컬의 `.next`만 올리거나 `v
 - 물품은 브라우저 메모리에만 저장된다. 새로고침하면 초기 목록으로 돌아간다. Vercel 배포 후에도 같은 방식으로 동작한다.
 - `/returns`는 아직 반납 데이터나 AI 모델과 연결되지 않은 화면이다.
 - `/api/health`는 Supabase 데이터베이스 연결만 확인한다. 위 환경 변수와 데이터베이스 함수가 없으면 503을 반환한다.
+- `/api/model/health`, `/api/model/labels`, `/api/model/predict`는 HTTPS 모델 서버로 요청을 중계한다. `MODEL_SERVER_URL`, `MODEL_SERVER_API_KEY` 환경 변수를 등록하고 다시 배포해야 한다. [설정 방법](HTTPS_SETUP.md)
 - Pretendard 글꼴은 jsDelivr에서 불러온다. 불러오지 못하면 시스템 글꼴을 사용한다.
 
 ## 참고한 공식 문서
