@@ -1,0 +1,11 @@
+{
+  "model": "yolov8n-oiv7.pt",
+  "labels": [
+    {"name": "계산기", "model_label": "Calculator", "model_class_id": 80},
+    {"name": "가위", "model_label": "Scissors", "model_class_id": 438},
+    {"name": "스테이플러", "model_label": "Stapler", "model_class_id": 490},
+    {"name": "자", "model_label": "Ruler", "model_class_id": 429},
+    {"name": "우산", "model_label": "Umbrella", "model_class_id": 562},
+    {"name": "마우스", "model_label": "Computer mouse", "model_class_id": 129}
+  ]
+}

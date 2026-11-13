@@ -2,6 +2,10 @@
 
 공용 물품을 등록하고 수량을 수정하는 Next.js 프로젝트입니다. Supabase 연결 확인 API가 있으며, 물품 데이터 저장과 AI 기능은 아직 연결되지 않았습니다.
 
+## 물품 인식 모델 서버
+
+별도의 Python 서버에서 YOLOv8 Open Images V7 모델과 Supabase 물품 라벨을 연결합니다. 웹 서버에는 `/api/model/health`, `/api/model/labels`, `/api/model/predict`를 추가했습니다. 서버 실행은 [모델 서버 안내](model-server/README.md), 무료 고정 HTTPS 및 Vercel 연결은 [HTTPS 설정](HTTPS_SETUP.md), 기준 라벨 여섯 개는 [DB 준비 안내](supabase/README.md)를 참고하세요. 반납 화면의 사진 업로드 UI는 아직 연결되지 않았습니다.
+
 ## 로컬에서 실행하기
 
 Node.js 22와 npm을 사용합니다. `.nvmrc`와 `package.json`에 Node.js 버전을 지정했습니다.
