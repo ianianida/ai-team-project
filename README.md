@@ -1,10 +1,10 @@
 # AI 개발과 실전 팀 프로젝트
 
-공용 물품을 등록하고 수량을 수정하는 Next.js 프로젝트입니다. Supabase 연결 확인 API가 있으며, 물품 데이터 저장과 AI 기능은 아직 연결되지 않았습니다.
+공용 물품 관리와 사진으로 반납 물품을 확인하는 Next.js 프로젝트입니다. 반납 확인 화면은 카메라·사진 업로드, YOLO 모델 인식, Supabase 물품 라벨 연결을 지원합니다. 물품 관리 목록은 임시 데이터이며 반납 기록 저장과 재고 변경은 아직 연결되지 않았습니다.
 
 ## 물품 인식 모델 서버
 
-별도의 Python 서버에서 YOLOv8 Open Images V7 모델과 Supabase 물품 라벨을 연결합니다. 웹 서버에는 `/api/model/health`, `/api/model/labels`, `/api/model/predict`를 추가했습니다. 서버 실행은 [모델 서버 안내](model-server/README.md), 무료 고정 HTTPS 및 Vercel 연결은 [HTTPS 설정](HTTPS_SETUP.md), 기준 라벨 여섯 개는 [DB 준비 안내](supabase/README.md)를 참고하세요. 반납 화면의 사진 업로드 UI는 아직 연결되지 않았습니다.
+별도의 Python 서버에서 YOLOv8 Open Images V7 모델과 Supabase 물품 라벨을 연결합니다. 반납 화면에서 `/api/model/labels`, `/api/model/predict`를 호출하며 공유 API 키는 웹 서버에만 보관합니다. 서버 실행은 [모델 서버 안내](model-server/README.md), 무료 고정 HTTPS 및 Vercel 연결은 [HTTPS 설정](HTTPS_SETUP.md), 기준 라벨 여섯 개는 [DB 준비 안내](supabase/README.md)를 참고하세요.
 
 ## 로컬에서 실행하기
 
@@ -32,7 +32,7 @@ npm run start
 | --- | --- |
 | `/` | `/items`로 이동 |
 | `/items` | 임시 물품 목록, 물품 등록·수정, 재고 없음 표시 |
-| `/returns` | 반납 데이터 연결 전 기본 화면 |
+| `/returns` | 카메라 촬영·사진 선택 → 물품 인식 → DB 라벨 확인·수동 선택 |
 | `/api/health` | Supabase 데이터베이스 연결 확인 API |
 
 물품은 브라우저 메모리에만 저장되며, 새로고침하면 초기 목록으로 돌아갑니다.

@@ -1,12 +1,18 @@
-// 반납 확인 화면 — 아직 틀만 있다. 다음 이슈에서 채운다.
+import type { Metadata } from "next";
+import ReturnCapture from "./return-capture";
+
+export const metadata: Metadata = { title: "사진으로 반납 확인 | 물품 대장" };
+
 export default function ReturnsPage() {
   return (
     <div>
-      <h1 className="text-2xl font-extrabold tracking-tight">반납 확인</h1>
-      <div className="mt-6 rounded-xl border border-dashed border-field bg-surface px-5 py-12 text-center">
-        <p className="font-semibold">아직 확인할 반납이 없습니다.</p>
-        <p className="mt-1 text-sm text-muted">물품이 반납되면 여기에서 확인합니다.</p>
-      </div>
+      <h1 className="text-2xl font-extrabold tracking-tight">
+        사진으로 반납 확인
+      </h1>
+      <p className="mt-2 text-muted">
+        반납할 물품을 한 개씩 촬영하면 등록된 물품 이름을 찾아드려요.
+      </p>
+      <ReturnCapture />
     </div>
   );
 }

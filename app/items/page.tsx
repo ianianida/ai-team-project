@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 type Item = {
   id: number;
@@ -98,14 +99,19 @@ export default function ItemsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold tracking-tight">물품 관리</h1>
-      <p className="mt-1.5">
-        물품 <strong className="font-bold">{items.length}</strong>종, 전체{" "}
-        <strong className="font-bold">{totalQuantity}</strong>개{" "}
-        {outOfStockCount > 0 && (
-          <span className="ml-2 font-semibold text-warn">재고 없음 {outOfStockCount}종</span>
-        )}
-      </p>
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight">물품 관리</h1>
+          <p className="mt-1.5">
+            물품 <strong className="font-bold">{items.length}</strong>종, 전체{" "}
+            <strong className="font-bold">{totalQuantity}</strong>개{" "}
+            {outOfStockCount > 0 && (
+              <span className="ml-2 font-semibold text-warn">재고 없음 {outOfStockCount}종</span>
+            )}
+          </p>
+        </div>
+        <Link href="/returns" className={primaryButtonClass}>사진으로 반납 확인</Link>
+      </div>
 
       {/* PC: 목록(왼쪽) + 등록(오른쪽) / 폰: 위아래로 쌓인다 */}
       <div className="mt-6 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">

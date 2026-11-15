@@ -82,7 +82,7 @@ if (!response.ok) throw new Error('물품 인식 요청 실패')
 const result = await response.json()
 ~~~
 
-외부 테스트는 React → `/api/model/predict` → HTTPS 터널 → 모델 서버로 연결합니다. Node.js Route Handler가 서버 환경 변수의 공유 키를 `X-API-Key`로 전달하며 브라우저에는 노출하지 않습니다. ngrok 무료 고정 주소와 실행·Vercel 설정은 [HTTPS_SETUP.md](../HTTPS_SETUP.md)를 참고하세요. 반납 화면에서 사진을 선택하고 결과를 표시하는 UI 연결은 별도 작업입니다.
+반납 화면(`/returns`)은 카메라 촬영·사진 선택 → `/api/model/predict` → HTTPS 터널 → 모델 서버로 연결합니다. Node.js Route Handler가 서버 환경 변수의 공유 키를 `X-API-Key`로 전달하며 브라우저에는 노출하지 않습니다. ngrok 무료 고정 주소와 실행·Vercel 설정은 [HTTPS_SETUP.md](../HTTPS_SETUP.md)를 참고하세요. 지원 형식의 4MB·2,500만 픽셀 이하 사진은 원본을 전송합니다. 큰 사진이나 다른 형식은 방향을 적용하고 긴 변 1,600px 이하의 JPEG로 변환합니다. 결과에서 DB 물품 라벨을 확인하거나 직접 선택할 수 있으며 반납 기록·재고는 변경하지 않습니다.
 
 ## 검증 및 범위
 
