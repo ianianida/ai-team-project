@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from main import Settings, create_app
+from main import Settings, YoloEngine, create_app
 
 
 class FakeEngine:
@@ -166,3 +166,48 @@ def test_camera_exif_orientation_is_still_applied():
         assert response.status_code == 200
         assert response.json()["image"] == {"width": 12, "height": 20}
     assert engine.received.size == (12, 20)
+
+
+def test_model_settings_and_tta_are_reported_by_http_endpoints():
+    settings = Settings(model_name="yolov8m-oiv7.pt", tta=True)
+    with TestClient(create_app(settings, FakeEngine())) as client:
+        model = client.get("/health").json()["model"]
+        assert model["name"] == "yolov8m-oiv7.pt"
+        assert model["tta"] is True
+        assert model["image_size"] == 640
+        response = client.post("/predict", files=image_file()).json()
+        assert response["model"] == "yolov8m-oiv7.pt"
+        assert response["tta"] is True
+
+
+@pytest.mark.parametrize("tta", [True, False])
+def test_tta_setting_reaches_the_real_engine_prediction_call(tta):
+    calls = []
+
+    class Model:
+        def predict(self, **kwargs):
+            calls.append(kwargs)
+            return [type("Result", (), {"boxes": []})()]
+
+    engine = YoloEngine(Settings(model_name="yolov8m-oiv7.pt", tta=tta))
+    engine.model = Model()
+    engine.device = "cpu"
+    assert engine.predict(Image.new("RGB", (32, 32), "white")) == []
+    assert calls[0]["augment"] is tta
+    assert calls[0]["imgsz"] == 640
+    assert calls[0]["conf"] == 0.25
+
+
+def test_environment_allows_explicit_rollback_and_rejects_invalid_model_or_tta(monkeypatch):
+    monkeypatch.setenv("MODEL_NAME", "yolov8n-oiv7.pt")
+    monkeypatch.setenv("MODEL_TTA", "false")
+    settings = Settings.from_env()
+    assert settings.model_name == "yolov8n-oiv7.pt"
+    assert settings.tta is False
+    monkeypatch.setenv("MODEL_TTA", "maybe")
+    with pytest.raises(ValueError, match="MODEL_TTA"):
+        Settings.from_env()
+    monkeypatch.setenv("MODEL_TTA", "true")
+    monkeypatch.setenv("MODEL_NAME", "../../unexpected.pt")
+    with pytest.raises(ValueError, match="MODEL_NAME"):
+        Settings.from_env()

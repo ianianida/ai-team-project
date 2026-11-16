@@ -26,7 +26,8 @@ from starlette.concurrency import run_in_threadpool
 import httpx
 
 ROOT = Path(__file__).resolve().parent
-MODEL_NAME = "yolov8n-oiv7.pt"
+MODEL_NAME = "yolov8m-oiv7.pt"
+SUPPORTED_MODELS = {"yolov8n-oiv7.pt", "yolov8s-oiv7.pt", "yolov8m-oiv7.pt"}
 load_dotenv(ROOT / ".env", override=False)
 os.environ.setdefault("YOLO_CONFIG_DIR", str(ROOT / ".cache" / "ultralytics"))
 logger = logging.getLogger("model_server")
@@ -44,6 +45,8 @@ class Settings:
     active_column: str = "is_active"
     cache_seconds: float = 60
     device: str = "auto"
+    model_name: str = MODEL_NAME
+    tta: bool = True
     confidence: float = 0.25
     image_size: int = 640
     max_detections: int = 20
@@ -51,8 +54,17 @@ class Settings:
     api_key: str = ""
     allowed_origins: tuple[str, ...] = ("http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173", "http://127.0.0.1:5173")
 
+    def __post_init__(self):
+        if self.model_name not in SUPPORTED_MODELS:
+            raise ValueError("MODEL_NAME must be a supported YOLOv8 Open Images V7 checkpoint")
+        if not isinstance(self.tta, bool):
+            raise ValueError("MODEL_TTA must be a boolean")
+
     @classmethod
     def from_env(cls) -> Settings:
+        tta = os.getenv("MODEL_TTA", "true").strip().casefold()
+        if tta not in {"true", "false", "1", "0"}:
+            raise ValueError("MODEL_TTA must be true, false, 1, or 0")
         result = cls(
             supabase_url=os.getenv("SUPABASE_URL", "").rstrip("/"),
             supabase_key=os.getenv("SUPABASE_KEY", ""),
@@ -64,6 +76,8 @@ class Settings:
             active_column=os.getenv("SUPABASE_LABEL_ACTIVE_COLUMN", "is_active"),
             cache_seconds=float(os.getenv("LABEL_CACHE_SECONDS", "60")),
             device=os.getenv("MODEL_DEVICE", "auto"),
+            model_name=os.getenv("MODEL_NAME", MODEL_NAME).strip(),
+            tta=tta in {"true", "1"},
             confidence=float(os.getenv("MODEL_CONFIDENCE", "0.25")),
             image_size=int(os.getenv("MODEL_IMAGE_SIZE", "640")),
             max_detections=int(os.getenv("MODEL_MAX_DETECTIONS", "20")),
@@ -80,7 +94,7 @@ class Settings:
             raise ValueError("Set both SUPABASE_URL and SUPABASE_KEY, or leave both empty")
         if result.supabase_url and not result.supabase_url.startswith("https://"):
             raise ValueError("SUPABASE_URL must use HTTPS")
-        if not 0 < result.confidence <= 1 or result.max_upload_mb <= 0 or result.cache_seconds < 0:
+        if not 0 < result.confidence <= 1 or result.max_upload_mb <= 0 or result.cache_seconds < 0 or result.image_size <= 0:
             raise ValueError("Invalid confidence, upload limit, or cache duration")
         return result
 
@@ -190,11 +204,11 @@ class YoloEngine:
         import torch
         from ultralytics import YOLO
 
-        path = ROOT / "models" / MODEL_NAME
+        path = ROOT / "models" / self.settings.model_name
         path.parent.mkdir(parents=True, exist_ok=True)
         self.model = YOLO(str(path))
         self.names = dict(self.model.names)
-        required = {"Calculator", "Scissors", "Computer mouse"}
+        required = {"Calculator", "Scissors", "Stapler", "Ruler", "Umbrella", "Computer mouse"}
         if not required.issubset(set(self.names.values())):
             raise RuntimeError("Wrong model: expected the Open Images V7 label set")
         self.device = self.settings.device
@@ -213,6 +227,7 @@ class YoloEngine:
                 imgsz=self.settings.image_size,
                 conf=self.settings.confidence,
                 max_det=self.settings.max_detections,
+                augment=self.settings.tta,
                 verbose=False,
                 save=False,
             )[0]
@@ -283,7 +298,7 @@ def create_app(settings: Settings | None = None, engine=None, transport=None) ->
     @app.get("/health")
     async def health():
         return {
-            "model": {"name": MODEL_NAME, "loaded": predictor.model is not None, "device": predictor.device, "class_count": len(predictor.names)},
+            "model": {"name": s.model_name, "loaded": predictor.model is not None, "device": predictor.device, "class_count": len(predictor.names), "tta": s.tta, "image_size": s.image_size, "confidence": s.confidence},
             "catalog": app.state.catalog.status(),
         }
 
@@ -331,7 +346,8 @@ def create_app(settings: Settings | None = None, engine=None, transport=None) ->
         predictions = await run_in_threadpool(predictor.predict, image)
         resolved = resolve_predictions(predictions, labels)
         return {
-            "model": MODEL_NAME,
+            "model": s.model_name,
+            "tta": s.tta,
             "image": {"width": image.width, "height": image.height},
             "inference_ms": round((time.perf_counter() - started) * 1000, 1),
             "catalog": app.state.catalog.status(),
