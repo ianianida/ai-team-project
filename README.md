@@ -4,7 +4,7 @@
 
 ## 물품 인식 모델 서버
 
-별도의 Python 서버에서 YOLOv8 Open Images V7 모델과 Supabase 물품 라벨을 연결합니다. 반납 화면에서 `/api/model/labels`, `/api/model/predict`를 호출하며 공유 API 키는 웹 서버에만 보관합니다. 서버 실행은 [모델 서버 안내](model-server/README.md), 무료 고정 HTTPS 및 Vercel 연결은 [HTTPS 설정](HTTPS_SETUP.md), 기준 라벨 여섯 개는 [DB 준비 안내](supabase/README.md)를 참고하세요.
+별도의 Python 서버에서 YOLOv8m Open Images V7 + TTA와 Supabase 물품 라벨을 연결합니다. 반납 화면에서 `/api/model/labels`, `/api/model/predict`를 호출하며 공유 API 키는 웹 서버에만 보관합니다. 서버 실행은 [모델 서버 안내](model-server/README.md), 모델 선정 근거는 [비교 기록](model-server/evaluation/2026-11-16.md), 무료 고정 HTTPS 및 Vercel 연결은 [HTTPS 설정](HTTPS_SETUP.md), 기준 라벨 여섯 개는 [DB 준비 안내](supabase/README.md)를 참고하세요.
 
 ## 로컬에서 실행하기
 

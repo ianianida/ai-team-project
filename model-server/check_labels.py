@@ -23,7 +23,7 @@ def main():
     with httpx.Client(base_url=args.base_url, headers=headers, timeout=10) as client:
         health = client.get("/health")
         health.raise_for_status()
-        if health.json()["model"]["name"] != expected["model"]:
+        if health.json()["model"]["name"] != os.getenv("MODEL_NAME", expected["model"]).strip():
             raise SystemExit("The running model does not match item-labels.json")
         response = client.get("/model/classes")
         response.raise_for_status()

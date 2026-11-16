@@ -1,6 +1,6 @@
 # 공용 물품 모델 서버
 
-YOLOv8 Open Images V7 사전학습 모델로 사진에서 라벨·탐지 점수·박스를 반환합니다. Supabase의 물품 라벨이 연결되어 있으면 해당 행의 ID와 표준 이름을 함께 반환합니다. 반환 결과는 관리자 확인용이며 대여·반납 내역이나 재고를 변경하지 않습니다.
+YOLOv8m Open Images V7 사전학습 모델과 TTA(여러 크기·좌우 반전 추론)를 사용해 사진에서 라벨·탐지 점수·박스를 반환합니다. Supabase의 물품 라벨이 연결되어 있으면 해당 행의 ID와 표준 이름을 함께 반환합니다. 반환 결과는 관리자 확인용이며 대여·반납 내역이나 재고를 변경하지 않습니다.
 
 ## 실행
 
@@ -13,7 +13,9 @@ cp model-server/.env.example model-server/.env
 bash model-server/start.sh
 ~~~
 
-처음 실행하면 공식 Ultralytics 배포처에서 yolov8n-oiv7.pt를 내려받아 models 폴더에 저장하고 워밍업합니다. 다음 실행부터 저장된 파일을 사용합니다. 기본 주소는 http://127.0.0.1:8001 이며 파일 업로드 설명·실행 화면은 http://127.0.0.1:8001/docs 입니다. MODEL_DEVICE=auto는 사용 가능한 CUDA → Apple MPS → CPU 순서로 선택합니다. CPU를 쓰려면 .env에서 MODEL_DEVICE=cpu로 설정합니다.
+처음 실행하면 공식 Ultralytics 배포처에서 yolov8m-oiv7.pt를 내려받아 models 폴더에 저장하고 워밍업합니다. 다음 실행부터 저장된 파일을 사용합니다. 기본 주소는 http://127.0.0.1:8001 이며 파일 업로드 설명·실행 화면은 http://127.0.0.1:8001/docs 입니다. MODEL_DEVICE=auto는 사용 가능한 CUDA → Apple MPS → CPU 순서로 선택합니다. CPU를 쓰려면 .env에서 MODEL_DEVICE=cpu로 설정합니다.
+
+기본값은 `MODEL_NAME=yolov8m-oiv7.pt`, `MODEL_TTA=true`, `MODEL_IMAGE_SIZE=640`, `MODEL_CONFIDENCE=0.25`입니다. 운영 설정은 `/health`의 model 객체와 `/predict`의 model·tta에서 확인합니다. 기존 nano로 되돌릴 때는 `MODEL_NAME=yolov8n-oiv7.pt`, `MODEL_TTA=false`로 설정하고 서버를 재시작합니다. 지원 체크포인트는 n·s·m의 Open Images V7 `.pt` 파일로 제한합니다. [모델 비교 기록](evaluation/2026-11-16.md)은 제한된 진단 샘플 결과이며 전체 인식 정확도 검증을 뜻하지 않습니다.
 
 ~~~bash
 curl http://127.0.0.1:8001/health

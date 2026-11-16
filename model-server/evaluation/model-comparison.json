@@ -1,0 +1,487 @@
+{
+  "description": "Diagnostic comparison on five positive images and a blank control, not a held-out accuracy benchmark. All transparent inputs composited on white; confidence=0.25; additional training=none. Timing is a second local call per image after warm-up, excludes model load and HTTP transfer.",
+  "configs": [
+    {
+      "config": "nano-640",
+      "model": "yolov8n-oiv7.pt",
+      "image_size": 640,
+      "positive_correct": 3,
+      "positive_count": 5,
+      "blank_control_passed": true,
+      "median_local_ms": 33.25,
+      "samples": [
+        {
+          "image": "ruler",
+          "expected": "Ruler",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 47.1,
+          "detections": []
+        },
+        {
+          "image": "scissors",
+          "expected": "Scissors",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 38.7,
+          "detections": [
+            {
+              "label": "Knife",
+              "score": 0.6469123363494873
+            },
+            {
+              "label": "Handgun",
+              "score": 0.4373752176761627
+            }
+          ]
+        },
+        {
+          "image": "transparent_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": "Computer mouse",
+          "correct": true,
+          "local_inference_ms": 23.1,
+          "detections": [
+            {
+              "label": "Computer mouse",
+              "score": 0.5663867592811584
+            }
+          ]
+        },
+        {
+          "image": "wired_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": "Computer mouse",
+          "correct": true,
+          "local_inference_ms": 33.4,
+          "detections": [
+            {
+              "label": "Computer mouse",
+              "score": 0.6317304968833923
+            }
+          ]
+        },
+        {
+          "image": "wireless_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": "Computer mouse",
+          "correct": true,
+          "local_inference_ms": 33.1,
+          "detections": [
+            {
+              "label": "Computer mouse",
+              "score": 0.7852350473403931
+            }
+          ]
+        },
+        {
+          "image": "blank_white",
+          "expected": null,
+          "selected_catalog_label": null,
+          "correct": true,
+          "local_inference_ms": 29.3,
+          "detections": []
+        }
+      ],
+      "augment": false
+    },
+    {
+      "config": "nano-960",
+      "model": "yolov8n-oiv7.pt",
+      "image_size": 960,
+      "positive_correct": 1,
+      "positive_count": 5,
+      "blank_control_passed": true,
+      "median_local_ms": 42.6,
+      "samples": [
+        {
+          "image": "ruler",
+          "expected": "Ruler",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 48.8,
+          "detections": []
+        },
+        {
+          "image": "scissors",
+          "expected": "Scissors",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 80.5,
+          "detections": [
+            {
+              "label": "Knife",
+              "score": 0.43400490283966064
+            }
+          ]
+        },
+        {
+          "image": "transparent_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 39.0,
+          "detections": []
+        },
+        {
+          "image": "wired_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": "Computer mouse",
+          "correct": true,
+          "local_inference_ms": 46.2,
+          "detections": [
+            {
+              "label": "Mobile phone",
+              "score": 0.34042245149612427
+            },
+            {
+              "label": "Computer mouse",
+              "score": 0.33676522970199585
+            }
+          ]
+        },
+        {
+          "image": "wireless_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 34.0,
+          "detections": []
+        },
+        {
+          "image": "blank_white",
+          "expected": null,
+          "selected_catalog_label": null,
+          "correct": true,
+          "local_inference_ms": 35.0,
+          "detections": []
+        }
+      ],
+      "augment": false
+    },
+    {
+      "config": "nano-1280",
+      "model": "yolov8n-oiv7.pt",
+      "image_size": 1280,
+      "positive_correct": 0,
+      "positive_count": 5,
+      "blank_control_passed": true,
+      "median_local_ms": 57.05,
+      "samples": [
+        {
+          "image": "ruler",
+          "expected": "Ruler",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 56.1,
+          "detections": []
+        },
+        {
+          "image": "scissors",
+          "expected": "Scissors",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 43.0,
+          "detections": []
+        },
+        {
+          "image": "transparent_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 46.3,
+          "detections": []
+        },
+        {
+          "image": "wired_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 59.4,
+          "detections": [
+            {
+              "label": "Mobile phone",
+              "score": 0.39269953966140747
+            }
+          ]
+        },
+        {
+          "image": "wireless_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 58.7,
+          "detections": [
+            {
+              "label": "Car",
+              "score": 0.2881649434566498
+            }
+          ]
+        },
+        {
+          "image": "blank_white",
+          "expected": null,
+          "selected_catalog_label": null,
+          "correct": true,
+          "local_inference_ms": 58.0,
+          "detections": []
+        }
+      ],
+      "augment": false
+    },
+    {
+      "config": "small-640",
+      "model": "yolov8s-oiv7.pt",
+      "image_size": 640,
+      "positive_correct": 3,
+      "positive_count": 5,
+      "blank_control_passed": true,
+      "median_local_ms": 31.75,
+      "samples": [
+        {
+          "image": "ruler",
+          "expected": "Ruler",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 28.1,
+          "detections": []
+        },
+        {
+          "image": "scissors",
+          "expected": "Scissors",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 29.6,
+          "detections": [
+            {
+              "label": "Knife",
+              "score": 0.4022517502307892
+            }
+          ]
+        },
+        {
+          "image": "transparent_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": "Computer mouse",
+          "correct": true,
+          "local_inference_ms": 23.3,
+          "detections": [
+            {
+              "label": "Computer mouse",
+              "score": 0.8406807780265808
+            }
+          ]
+        },
+        {
+          "image": "wired_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": "Computer mouse",
+          "correct": true,
+          "local_inference_ms": 34.6,
+          "detections": [
+            {
+              "label": "Computer mouse",
+              "score": 0.9265545606613159
+            }
+          ]
+        },
+        {
+          "image": "wireless_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": "Computer mouse",
+          "correct": true,
+          "local_inference_ms": 33.9,
+          "detections": [
+            {
+              "label": "Computer mouse",
+              "score": 0.9236903190612793
+            }
+          ]
+        },
+        {
+          "image": "blank_white",
+          "expected": null,
+          "selected_catalog_label": null,
+          "correct": true,
+          "local_inference_ms": 34.6,
+          "detections": []
+        }
+      ],
+      "augment": false
+    },
+    {
+      "config": "medium-640",
+      "model": "yolov8m-oiv7.pt",
+      "image_size": 640,
+      "positive_correct": 4,
+      "positive_count": 5,
+      "blank_control_passed": true,
+      "median_local_ms": 64.05,
+      "samples": [
+        {
+          "image": "ruler",
+          "expected": "Ruler",
+          "selected_catalog_label": "Ruler",
+          "correct": true,
+          "local_inference_ms": 71.1,
+          "detections": [
+            {
+              "label": "Ruler",
+              "score": 0.33472833037376404
+            }
+          ]
+        },
+        {
+          "image": "scissors",
+          "expected": "Scissors",
+          "selected_catalog_label": null,
+          "correct": false,
+          "local_inference_ms": 60.9,
+          "detections": [
+            {
+              "label": "Knife",
+              "score": 0.5962774753570557
+            }
+          ]
+        },
+        {
+          "image": "transparent_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": "Computer mouse",
+          "correct": true,
+          "local_inference_ms": 60.9,
+          "detections": [
+            {
+              "label": "Computer mouse",
+              "score": 0.9858965277671814
+            }
+          ]
+        },
+        {
+          "image": "wired_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": "Computer mouse",
+          "correct": true,
+          "local_inference_ms": 63.3,
+          "detections": [
+            {
+              "label": "Computer mouse",
+              "score": 0.9823336601257324
+            }
+          ]
+        },
+        {
+          "image": "wireless_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": "Computer mouse",
+          "correct": true,
+          "local_inference_ms": 64.8,
+          "detections": [
+            {
+              "label": "Computer mouse",
+              "score": 0.9757283926010132
+            }
+          ]
+        },
+        {
+          "image": "blank_white",
+          "expected": null,
+          "selected_catalog_label": null,
+          "correct": true,
+          "local_inference_ms": 71.7,
+          "detections": []
+        }
+      ],
+      "augment": false
+    },
+    {
+      "config": "medium-640-tta",
+      "model": "yolov8m-oiv7.pt",
+      "image_size": 640,
+      "augment": true,
+      "positive_correct": 5,
+      "positive_count": 5,
+      "blank_control_passed": true,
+      "median_local_ms": 112.0,
+      "samples": [
+        {
+          "image": "ruler",
+          "expected": "Ruler",
+          "selected_catalog_label": "Ruler",
+          "correct": true,
+          "local_inference_ms": 152.6,
+          "detections": [
+            {
+              "label": "Ruler",
+              "score": 0.5304398536682129
+            }
+          ]
+        },
+        {
+          "image": "scissors",
+          "expected": "Scissors",
+          "selected_catalog_label": "Scissors",
+          "correct": true,
+          "local_inference_ms": 115.6,
+          "detections": [
+            {
+              "label": "Scissors",
+              "score": 0.37483853101730347
+            },
+            {
+              "label": "Knife",
+              "score": 0.31348565220832825
+            }
+          ]
+        },
+        {
+          "image": "transparent_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": "Computer mouse",
+          "correct": true,
+          "local_inference_ms": 97.1,
+          "detections": [
+            {
+              "label": "Computer mouse",
+              "score": 0.9876506924629211
+            }
+          ]
+        },
+        {
+          "image": "wired_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": "Computer mouse",
+          "correct": true,
+          "local_inference_ms": 109.9,
+          "detections": [
+            {
+              "label": "Computer mouse",
+              "score": 0.9867154955863953
+            }
+          ]
+        },
+        {
+          "image": "wireless_mouse",
+          "expected": "Computer mouse",
+          "selected_catalog_label": "Computer mouse",
+          "correct": true,
+          "local_inference_ms": 102.2,
+          "detections": [
+            {
+              "label": "Computer mouse",
+              "score": 0.986182689666748
+            }
+          ]
+        },
+        {
+          "image": "blank_white",
+          "expected": null,
+          "selected_catalog_label": null,
+          "correct": true,
+          "local_inference_ms": 114.1,
+          "detections": []
+        }
+      ]
+    }
+  ]
+}
