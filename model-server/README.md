@@ -65,7 +65,7 @@ Supabase 연결 정보나 실제 DB 행을 코드에 넣지 않았습니다.
 
 위 JSON은 형식 설명용 예시입니다. DB 미설정 상태에서는 status=catalog_not_configured, catalog.connected=false, catalog_label=null로 실제 모델 라벨만 반환합니다. DB에 매핑이 없으면 unmapped이며, 모델이 물체를 찾지 못하면 predictions는 빈 배열입니다. 탐지 점수는 정답 확률이나 반납 확정 여부가 아닙니다.
 
-박스는 업로드 사진의 EXIF 방향을 적용한 이미지 기준 x1, y1, x2, y2 픽셀 좌표입니다. image.width와 image.height를 기준으로 화면 크기에 맞게 변환합니다. JPEG·PNG·WebP만 받으며 파일은 최대 10MB, 이미지 크기는 최대 2,500만 픽셀입니다.
+박스는 업로드 사진의 EXIF 방향을 적용한 이미지 기준 x1, y1, x2, y2 픽셀 좌표입니다. image.width와 image.height를 기준으로 화면 크기에 맞게 변환합니다. 투명 배경은 흰색 위에 합성한 뒤 모델로 전달하며, 불투명 사진의 픽셀과 이미지 크기는 유지합니다. JPEG·PNG·WebP만 받으며 파일은 최대 10MB, 이미지 크기는 최대 2,500만 픽셀입니다.
 
 ## React 및 Node.js 연결
 

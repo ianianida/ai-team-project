@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import httpx
+import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
@@ -102,3 +103,66 @@ def test_catalog_refresh_replaces_names_without_restarting_model():
         assert client.post("/labels/reload").status_code == 200
         data = client.post("/predict", files=image_file()).json()
         assert data["predictions"][0]["catalog_label"]["name"] == "바뀐 이름"
+
+
+class CapturingEngine(FakeEngine):
+    received = None
+
+    def predict(self, image):
+        self.received = image.copy()
+        return super().predict(image)
+
+
+def encoded_file(image, format, **save_options):
+    data = BytesIO()
+    image.save(data, format, **save_options)
+    mime = {"PNG": "image/png", "WEBP": "image/webp", "JPEG": "image/jpeg"}[format]
+    return {"file": ("photo." + format.lower(), data.getvalue(), mime)}
+
+
+@pytest.mark.parametrize("format", ["PNG", "WEBP"])
+def test_transparent_uploads_reach_model_with_white_background_and_opaque_pixels_preserved(format):
+    photo = Image.new("RGBA", (16, 12), (0, 0, 0, 0))
+    photo.putpixel((1, 0), (12, 23, 34, 255))
+    photo.putpixel((2, 0), (0, 0, 0, 128))
+    engine = CapturingEngine()
+    options = {"lossless": True} if format == "WEBP" else {}
+    with TestClient(create_app(Settings(), engine)) as client:
+        assert client.post("/predict", files=encoded_file(photo, format, **options)).status_code == 200
+    assert engine.received.mode == "RGB"
+    assert engine.received.size == photo.size
+    assert engine.received.getpixel((0, 0)) == (255, 255, 255)
+    assert engine.received.getpixel((1, 0)) == (12, 23, 34)
+    assert engine.received.getpixel((2, 0)) == (127, 127, 127)
+
+
+def test_palette_transparency_is_composited_before_model_inference():
+    photo = Image.new("P", (16, 12), 0)
+    photo.putpalette([0, 0, 0, 20, 30, 40] + [0] * 762)
+    photo.putpixel((1, 0), 1)
+    engine = CapturingEngine()
+    with TestClient(create_app(Settings(), engine)) as client:
+        assert client.post("/predict", files=encoded_file(photo, "PNG", transparency=0)).status_code == 200
+    assert engine.received.getpixel((0, 0)) == (255, 255, 255)
+    assert engine.received.getpixel((1, 0)) == (20, 30, 40)
+
+
+def test_opaque_rgb_upload_is_not_reencoded_or_changed():
+    photo = Image.new("RGB", (16, 12), (17, 31, 49))
+    engine = CapturingEngine()
+    with TestClient(create_app(Settings(), engine)) as client:
+        assert client.post("/predict", files=encoded_file(photo, "PNG")).status_code == 200
+    assert engine.received.mode == "RGB"
+    assert engine.received.tobytes() == photo.tobytes()
+
+
+def test_camera_exif_orientation_is_still_applied():
+    photo = Image.new("RGB", (20, 12), (100, 50, 20))
+    exif = Image.Exif()
+    exif[274] = 6
+    engine = CapturingEngine()
+    with TestClient(create_app(Settings(), engine)) as client:
+        response = client.post("/predict", files=encoded_file(photo, "JPEG", exif=exif))
+        assert response.status_code == 200
+        assert response.json()["image"] == {"width": 12, "height": 20}
+    assert engine.received.size == (12, 20)

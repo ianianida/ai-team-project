@@ -93,6 +93,16 @@ def normalize(value: str) -> str:
     return " ".join(unicodedata.normalize("NFKC", value).replace("_", " ").casefold().split())
 
 
+def prepare_model_image(source: Image.Image) -> Image.Image:
+    """Apply EXIF orientation and place transparent images on a white background."""
+    image = ImageOps.exif_transpose(source)
+    if "A" in image.getbands() or "transparency" in image.info:
+        rgba = image.convert("RGBA")
+        background = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
+        return Image.alpha_composite(background, rgba).convert("RGB")
+    return image.convert("RGB")
+
+
 class CatalogError(Exception):
     pass
 
@@ -313,7 +323,7 @@ def create_app(settings: Settings | None = None, engine=None, transport=None) ->
                         raise HTTPException(status_code=415, detail="Use a JPEG, PNG, or WebP image")
                     if source.width * source.height > 25_000_000:
                         raise HTTPException(status_code=413, detail="Image dimensions exceed 25 megapixels")
-                    image = ImageOps.exif_transpose(source).convert("RGB")
+                    image = prepare_model_image(source)
         except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError, Image.DecompressionBombWarning):
             raise HTTPException(status_code=415, detail="Invalid or unsupported image") from None
         labels = await get_labels()
