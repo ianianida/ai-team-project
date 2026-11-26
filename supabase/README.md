@@ -64,3 +64,9 @@ curl http://127.0.0.1:8001/labels
 ~~~bash
 model-server/.venv/bin/python model-server/check_labels.py
 ~~~
+
+## 반납 재고 기능 추가
+
+[20261126031548_return_stock_increment.sql](migrations/20261126031548_return_stock_increment.sql)을 기존 라벨 테이블이 있는 DB에 적용합니다. item_stock과 item_return_events를 추가하며 기존 라벨과 UUID는 유지합니다. 초기 수량은 0입니다. 기존 웹 화면의 임시 수량은 실제 재고가 아니므로 복사하지 않습니다. 두 신규 테이블은 RLS를 활성화하고 anon/authenticated 접근을 차단합니다. 서비스 역할만 수량 저장 RPC를 실행합니다.
+
+SQL Editor에서 적용한 경우 나중에 CLI 마이그레이션 이력을 별도로 맞춰야 합니다. 적용 후 `/api/inventory`에서 라벨 6종과 수량이 조회되어야 합니다.

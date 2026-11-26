@@ -19,7 +19,7 @@ export function modelError(error: unknown): Response {
 }
 
 /** Only the server reads the tunnel URL and shared key. Never return either. */
-export async function callModel(path: "/health" | "/labels" | "/predict", body?: FormData): Promise<Response> {
+export async function callModel(path: "/health" | "/labels" | "/predict" | "/inventory" | "/returns", body?: FormData | string): Promise<Response> {
   const base = process.env.MODEL_SERVER_URL;
   const key = process.env.MODEL_SERVER_API_KEY;
   if (!base || !key) {
@@ -39,7 +39,7 @@ export async function callModel(path: "/health" | "/labels" | "/predict", body?:
 
   const response = await fetch(url, {
     method: body ? "POST" : "GET",
-    headers: { "X-API-Key": key, "ngrok-skip-browser-warning": "true" },
+    headers: { "X-API-Key": key, "ngrok-skip-browser-warning": "true", ...(typeof body === "string" ? { "Content-Type": "application/json" } : {}) },
     body,
     redirect: "error",
     cache: "no-store",
@@ -50,6 +50,12 @@ export async function callModel(path: "/health" | "/labels" | "/predict", body?:
     // Upstream error bodies may contain infrastructure details; do not relay them.
     if (response.status === 401 || response.status === 403) {
       throw new ModelRequestError(502, "모델 서버 인증 설정을 확인해 주세요.");
+    }
+    if (path === "/returns" && (response.status === 409 || response.status === 422)) {
+      throw new ModelRequestError(409, "반납 요청이나 선택한 물품을 확인해 주세요.");
+    }
+    if ((path === "/returns" || path === "/inventory") && response.status === 503) {
+      throw new ModelRequestError(503, "재고 DB를 사용할 수 없어요. 관리자에게 재고 설정을 확인해 주세요.");
     }
     if (response.status === 413 || response.status === 415) {
       throw new ModelRequestError(response.status, "사진의 크기와 형식을 확인해 주세요.");

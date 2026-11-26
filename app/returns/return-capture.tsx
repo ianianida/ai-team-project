@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   canvasPhoto,
   prepareReturnPhoto,
@@ -65,6 +66,12 @@ export default function ReturnCapture() {
   const [result, setResult] = useState<Prediction | null>(null);
   const [selectedId, setSelectedId] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [returning, setReturning] = useState(false);
+  const [returnStarted, setReturnStarted] = useState(false);
+  const [returnError, setReturnError] = useState<string | null>(null);
+  const [returnedQuantity, setReturnedQuantity] = useState<number | null>(null);
+  const returnAttempt = useRef<{ request_id: string; label_id: string } | null>(null);
+  const returnLock = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [cameraState, setCameraState] = useState<"closed" | "opening" | "open">(
@@ -150,7 +157,7 @@ export default function ReturnCapture() {
   }
 
   async function openCamera() {
-    if (preparing || recognizing || cameraState !== "closed") return;
+    if (preparing || recognizing || returnStarted || cameraState !== "closed") return;
     setCameraError(null);
     if (!navigator.mediaDevices?.getUserMedia) {
       nativeCameraInput.current?.click();
@@ -183,6 +190,7 @@ export default function ReturnCapture() {
   }
 
   async function choosePhoto(file: File) {
+    if (returnStarted) return;
     closeCamera();
     const version = ++photoVersion.current;
     request.current?.abort();
@@ -237,7 +245,7 @@ export default function ReturnCapture() {
   }
 
   async function recognize() {
-    if (!photo || request.current) return;
+    if (!photo || request.current || returnStarted) return;
     const controller = new AbortController();
     request.current = controller;
     const timeout = window.setTimeout(() => controller.abort(), 55_000);
@@ -311,7 +319,44 @@ export default function ReturnCapture() {
     }
   }
 
+  async function confirmReturn() {
+    if (!selectedLabel || !photo || returnLock.current || confirmed) return;
+    returnLock.current = true;
+    setReturning(true);
+    setReturnStarted(true);
+    setReturnError(null);
+    returnAttempt.current ??= { request_id: crypto.randomUUID(), label_id: selectedLabel.id };
+    try {
+      const response = await fetch("/api/returns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(returnAttempt.current),
+        signal: AbortSignal.timeout(30_000),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "반납을 저장하지 못했어요.");
+      if (data.status !== "returned" || data.item?.label_id !== returnAttempt.current.label_id ||
+          !Number.isInteger(data.item?.quantity) || data.item.quantity < 0) {
+        throw new Error("반납 결과를 확인하지 못했어요. 다시 반납 완료를 눌러 주세요.");
+      }
+      if (mounted.current) {
+        setReturnedQuantity(data.item.quantity);
+        setConfirmed(true);
+      }
+    } catch (cause) {
+      if (mounted.current) setReturnError((cause instanceof Error ? cause.message : "반납 저장을 확인하지 못했어요.") + " 같은 사진에서 반납 완료를 다시 누르면 중복 없이 재시도해요.");
+    } finally {
+      returnLock.current = false;
+      if (mounted.current) setReturning(false);
+    }
+  }
+
   function resetPhoto() {
+    if (returnLock.current || (returnAttempt.current && !confirmed)) return;
+    returnAttempt.current = null;
+    setReturnStarted(false);
+    setReturnedQuantity(null);
+    setReturnError(null);
     closeCamera();
     photoVersion.current += 1;
     setPhoto(null);
@@ -321,7 +366,8 @@ export default function ReturnCapture() {
     setError(null);
   }
 
-  const busy = preparing || recognizing;
+  const busy = preparing || recognizing || returning;
+  const photoBusy = busy || returnStarted;
   const matches = (result?.predictions || []).filter(
     (item, index, all) =>
       item.match_status === "matched" &&
@@ -376,7 +422,7 @@ export default function ReturnCapture() {
                   type="button"
                   className={secondary}
                   onClick={closeCamera}
-                  disabled={preparing}
+                  disabled={photoBusy}
                 >
                   카메라 닫기
                 </button>
@@ -437,7 +483,7 @@ export default function ReturnCapture() {
             accept="image/*"
             aria-label="물품 사진 파일"
             hidden
-            disabled={busy}
+            disabled={photoBusy}
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = "";
@@ -451,7 +497,7 @@ export default function ReturnCapture() {
             capture="environment"
             aria-label="휴대폰 카메라 촬영"
             hidden
-            disabled={busy}
+            disabled={photoBusy}
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = "";
@@ -463,7 +509,7 @@ export default function ReturnCapture() {
               <button
                 type="button"
                 className={secondary}
-                disabled={busy}
+                disabled={photoBusy}
                 onClick={openCamera}
               >
                 <CameraIcon />
@@ -472,7 +518,7 @@ export default function ReturnCapture() {
               <button
                 type="button"
                 className={secondary}
-                disabled={busy}
+                disabled={photoBusy}
                 onClick={() => fileInput.current?.click()}
               >
                 사진 선택
@@ -482,7 +528,7 @@ export default function ReturnCapture() {
           <button
             type="button"
             className="mt-3 min-h-10 text-sm font-semibold text-brand underline-offset-4 hover:underline disabled:opacity-50"
-            disabled={busy}
+            disabled={photoBusy}
             onClick={() => {
               closeCamera();
               nativeCameraInput.current?.click();
@@ -506,7 +552,7 @@ export default function ReturnCapture() {
               type="button"
               className={`${primary} flex-1`}
               onClick={recognize}
-              disabled={!photo || busy || cameraState !== "closed"}
+              disabled={!photo || photoBusy || cameraState !== "closed"}
             >
               {preparing
                 ? "사진 준비 중…"
@@ -529,7 +575,7 @@ export default function ReturnCapture() {
                 <button
                   type="button"
                   className={secondary}
-                  disabled={preparing}
+                  disabled={photoBusy}
                   onClick={resetPhoto}
                 >
                   초기화
@@ -578,20 +624,21 @@ export default function ReturnCapture() {
               className="rounded-lg border border-brand/40 bg-brand/5 p-5"
             >
               <span className="text-sm font-semibold text-brand">
-                선택한 물품 라벨
+                반납 완료
               </span>
               <p className="mt-2 text-3xl font-extrabold">
                 {selectedLabel.name}
               </p>
               <p className="mt-3 text-sm leading-6 text-muted">
-                물품 이름을 확인했어요. 다음 물품도 촬영해서 확인할 수 있어요.
+                수량이 1개 늘었어요. 현재 수량: {returnedQuantity}개
               </p>
+              <Link href="/items" className={`${secondary} mt-4 w-full`}>물품 수량 확인</Link>
               <button
                 type="button"
                 className={`${primary} mt-5 w-full`}
                 onClick={resetPhoto}
               >
-                다음 물품 확인
+                다음 물품 반납
               </button>
             </div>
           ) : (
@@ -627,6 +674,7 @@ export default function ReturnCapture() {
                         key={item.catalog_label!.id}
                         type="button"
                         aria-pressed={selectedId === item.catalog_label!.id}
+                        disabled={photoBusy}
                         onClick={() => {
                           setSelectedId(item.catalog_label!.id);
                           setConfirmed(false);
@@ -661,7 +709,7 @@ export default function ReturnCapture() {
                 <select
                   id="return-label"
                   value={selectedId}
-                  disabled={busy || labels.length === 0 || !photo}
+                  disabled={photoBusy || labels.length === 0 || !photo}
                   onChange={(event) => {
                     setSelectedId(event.target.value);
                     setConfirmed(false);
@@ -688,21 +736,21 @@ export default function ReturnCapture() {
                   </p>
                 )}
               </div>
+              {returnError && <p role="alert" className="mt-4 rounded-lg bg-warn/10 p-3 text-sm text-warn">{returnError}</p>}
               <button
                 type="button"
                 className={`${primary} mt-5 w-full`}
                 disabled={!selectedLabel || busy || cameraState !== "closed"}
-                onClick={() => setConfirmed(true)}
+                onClick={confirmReturn}
               >
-                {selectedLabel
-                  ? `${selectedLabel.name} 라벨 확인`
-                  : "물품 라벨 확인"}
+                {returning ? "반납 저장 중…" : selectedLabel
+                  ? `${selectedLabel.name} 반납 완료 (+1)`
+                  : "물품을 선택해 주세요"}
               </button>
             </>
           )}
           <p className="mt-5 text-xs leading-5 text-muted">
-            이 화면에서는 물품 이름을 확인해요. 반납 기록과 재고는 변경되지
-            않아요.
+            사진 인식만으로 수량은 바뀌지 않아요. 물품을 확인하고 반납 완료를 누르면 수량이 1개 늘어요.
           </p>
         </div>
       </section>

@@ -211,3 +211,44 @@ def test_environment_allows_explicit_rollback_and_rejects_invalid_model_or_tta(m
     monkeypatch.setenv("MODEL_NAME", "../../unexpected.pt")
     with pytest.raises(ValueError, match="MODEL_NAME"):
         Settings.from_env()
+
+
+def test_inventory_joins_real_catalog_ids_to_stock_without_demo_items():
+    def database(request):
+        if request.url.path.endswith('/item_stock'):
+            return httpx.Response(200, json=[{'label_id': 'db-mouse-id', 'quantity': 7}])
+        return httpx.Response(200, json=[{'id': 'db-mouse-id', 'name': '마우스', 'model_label': 'Computer mouse'}])
+    with TestClient(create_app(configured(), FakeEngine(), httpx.MockTransport(database))) as client:
+        assert client.get('/inventory').json()['items'] == [{'id': 'db-mouse-id', 'name': '마우스', 'model_label': 'Computer mouse', 'quantity': 7}]
+
+
+def test_return_calls_atomic_rpc_with_request_id_and_requires_api_key():
+    import json
+    payload = {'request_id': '33333333-3333-4333-8333-333333333333', 'label_id': '11111111-1111-4111-8111-111111111111'}
+    calls = []
+    def database(request):
+        if request.method == 'POST':
+            calls.append(request)
+            return httpx.Response(200, json=[{**payload, 'name': '마우스', 'quantity': 1}])
+        return httpx.Response(200, json=[])
+    with TestClient(create_app(configured(api_key='test-key'), FakeEngine(), httpx.MockTransport(database))) as client:
+        assert client.post('/returns', json=payload).status_code == 401
+        headers = {'X-API-Key': 'test-key'}
+        assert client.post('/returns', json={'label_id': 'invalid'}, headers=headers).status_code == 422
+        response = client.post('/returns', json=payload, headers=headers)
+        assert response.status_code == 200 and response.json()['status'] == 'returned'
+        assert str(calls[0].url).endswith('/rpc/confirm_item_return')
+        assert json.loads(calls[0].content) == {'p_request_id': payload['request_id'], 'p_label_id': payload['label_id']}
+        assert calls[0].headers['apikey'] == 'sb_secret_test'
+
+
+def test_missing_stock_migration_is_an_error_never_a_fake_success():
+    def database(request):
+        if request.url.path.endswith('/item_labels'):
+            return httpx.Response(200, json=[])
+        return httpx.Response(404, json={'secret': 'sb_secret_test'})
+    with TestClient(create_app(configured(), FakeEngine(), httpx.MockTransport(database))) as client:
+        assert client.get('/inventory').status_code == 503
+        response = client.post('/returns', json={'request_id': '33333333-3333-4333-8333-333333333333', 'label_id': '11111111-1111-4111-8111-111111111111'})
+        assert response.status_code == 503
+        assert 'sb_secret_test' not in response.text

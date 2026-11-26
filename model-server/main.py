@@ -1,4 +1,4 @@
-"""YOLO inference with read-only Supabase label resolution."""
+"""YOLO inference, catalog resolution and explicit inventory returns."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ import threading
 import time
 import unicodedata
 import warnings
+from uuid import UUID
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, UploadFile
@@ -125,6 +126,11 @@ class CatalogLabel(BaseModel):
     id: str
     name: str
     model_label: str
+
+
+class ReturnRequest(BaseModel):
+    request_id: UUID
+    label_id: UUID
 
 
 class SupabaseCatalog:
@@ -294,6 +300,38 @@ def create_app(settings: Settings | None = None, engine=None, transport=None) ->
             return await app.state.catalog.fetch()
         except CatalogError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from None
+
+    async def stock_request(method: str, path: str, payload: dict | None = None):
+        if not s.configured:
+            raise HTTPException(503, "재고 DB 연결 설정이 필요해요.")
+        headers = {"apikey": s.supabase_key, "Accept-Profile": s.schema, "Content-Profile": s.schema}
+        if s.supabase_key.count(".") == 2:
+            headers["Authorization"] = f"Bearer {s.supabase_key}"
+        try:
+            response = await app.state.catalog.client.request(method, f"{s.supabase_url}/rest/v1/{path}", headers=headers, json=payload)
+            if response.status_code == 400:
+                raise HTTPException(409, "반납 요청이나 선택한 물품을 확인해 주세요.")
+            response.raise_for_status()
+            data = response.json()
+            if not isinstance(data, list):
+                raise ValueError("Expected rows")
+            return data
+        except (httpx.HTTPError, ValueError):
+            raise HTTPException(503, "재고 DB를 사용할 수 없어요. 관리자에게 재고 설정을 확인해 주세요.") from None
+
+    @app.get("/inventory", dependencies=[Depends(authenticate)])
+    async def inventory():
+        labels = await get_labels()
+        rows = await stock_request("GET", "item_stock?select=label_id,quantity")
+        quantities = {row["label_id"]: row["quantity"] for row in rows}
+        return {"items": [{**label.model_dump(), "quantity": quantities.get(label.id, 0)} for label in labels]}
+
+    @app.post("/returns", dependencies=[Depends(authenticate)])
+    async def confirm_return(body: ReturnRequest):
+        rows = await stock_request("POST", "rpc/confirm_item_return", {"p_request_id": str(body.request_id), "p_label_id": str(body.label_id)})
+        if len(rows) != 1:
+            raise HTTPException(503, "반납 결과를 확인하지 못했어요. 같은 요청으로 다시 시도해 주세요.")
+        return {"status": "returned", "item": rows[0]}
 
     @app.get("/health")
     async def health():

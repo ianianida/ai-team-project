@@ -1,6 +1,6 @@
 # 공용 물품 모델 서버
 
-YOLOv8m Open Images V7 사전학습 모델과 TTA(여러 크기·좌우 반전 추론)를 사용해 사진에서 라벨·탐지 점수·박스를 반환합니다. Supabase의 물품 라벨이 연결되어 있으면 해당 행의 ID와 표준 이름을 함께 반환합니다. 반환 결과는 관리자 확인용이며 대여·반납 내역이나 재고를 변경하지 않습니다.
+YOLOv8m Open Images V7 사전학습 모델과 TTA(여러 크기·좌우 반전 추론)를 사용해 사진에서 라벨·탐지 점수·박스를 반환합니다. Supabase의 물품 라벨이 연결되어 있으면 해당 행의 ID와 표준 이름을 함께 반환합니다. 사진 인식만으로 재고를 바꾸지 않습니다. 관리자가 반납 완료를 누르면 실제 라벨 ID를 사용해 재고를 1개 늘리고 반납 기록을 남깁니다.
 
 ## 실행
 
@@ -84,7 +84,7 @@ if (!response.ok) throw new Error('물품 인식 요청 실패')
 const result = await response.json()
 ~~~
 
-반납 화면(`/returns`)은 카메라 촬영·사진 선택 → `/api/model/predict` → HTTPS 터널 → 모델 서버로 연결합니다. Node.js Route Handler가 서버 환경 변수의 공유 키를 `X-API-Key`로 전달하며 브라우저에는 노출하지 않습니다. ngrok 무료 고정 주소와 실행·Vercel 설정은 [HTTPS_SETUP.md](../HTTPS_SETUP.md)를 참고하세요. 지원 형식의 4MB·2,500만 픽셀 이하 사진은 원본을 전송합니다. 큰 사진이나 다른 형식은 방향을 적용하고 긴 변 1,600px 이하의 JPEG로 변환합니다. 결과에서 DB 물품 라벨을 확인하거나 직접 선택할 수 있으며 반납 기록·재고는 변경하지 않습니다.
+반납 화면(`/returns`)은 카메라 촬영·사진 선택 → `/api/model/predict` → HTTPS 터널 → 모델 서버로 연결합니다. Node.js Route Handler가 서버 환경 변수의 공유 키를 `X-API-Key`로 전달하며 브라우저에는 노출하지 않습니다. ngrok 무료 고정 주소와 실행·Vercel 설정은 [HTTPS_SETUP.md](../HTTPS_SETUP.md)를 참고하세요. 지원 형식의 4MB·2,500만 픽셀 이하 사진은 원본을 전송합니다. 큰 사진이나 다른 형식은 방향을 적용하고 긴 변 1,600px 이하의 JPEG로 변환합니다. 결과에서 DB 물품 라벨을 확인하거나 직접 선택할 수 있으며 반납 완료 버튼에서 별도 저장 요청을 보내며, DB 저장이 성공해야 완료를 표시합니다.
 
 ## 검증 및 범위
 
@@ -96,3 +96,15 @@ model-server/.venv/bin/python -m pytest model-server/tests -q
 계약 테스트는 모의 DB와 모의 추론을 사용하여 실제 DB ID 연결, 미등록 라벨, 중복 매핑, DB 오류, 이미지 검증, 캐시 새로고침을 확인합니다. 실제 모델의 추론 확인은 별도로 수행하며 실제 물품 정확도를 뜻하지 않습니다. Supabase 실연결 검증은 사용자가 프로젝트 정보를 제공한 뒤 진행합니다.
 
 모델은 물품 종류를 탐지하며 외형이 같은 두 물품의 개별 자산 식별을 보장하지 않습니다. 가중치는 Git에 올리지 않고 실행 시 내려받습니다. 사용 모델 및 Ultralytics 패키지의 AGPL-3.0 조건은 https://www.ultralytics.com/license 를 참고합니다.
+
+## 반납 수량 저장
+
+[재고 마이그레이션](../supabase/migrations/20261126031548_return_stock_increment.sql)을 DB 소유자가 먼저 적용합니다. `item_stock.label_id`는 기존 `item_labels.id`를 참조하며 라벨 이름 비교로 물품을 추측하지 않습니다. 등록 라벨의 시작 수량은 0이며 실제 초기 재고가 있다면 관리자가 별도로 입력해야 합니다.
+
+`GET /inventory`는 실제 수량을 반환합니다. `POST /returns`는 UUID `request_id`, `label_id`를 받아 `confirm_item_return` RPC를 실행합니다. 같은 요청 ID의 재시도는 수량을 다시 늘리지 않고 기존 결과를 반환합니다. 다른 요청은 원자적인 +1로 처리합니다. 새 물품 반납은 다음 물품 버튼으로 새 요청을 시작합니다. 대여자별 대여 이력 검증은 포함하지 않습니다. 기존 공유 키를 그대로 쓰며 Supabase 키는 Python 서버에만 둡니다.
+
+```bash
+npm run test:stock
+```
+
+위 테스트는 격리된 PGlite의 실제 PostgreSQL 엔진에서 증가·재시도·충돌 롤백·일반 사용자 접근 거부를 확인합니다. 운영 DB 적용을 대신하지 않습니다.
